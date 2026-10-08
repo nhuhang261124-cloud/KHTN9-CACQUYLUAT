@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi KHTN 9: Bài 37 - Các Quy Luật Di Truyền Của Mendel</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #e8f5e9;
+            --secondary-color: #f57c00;
+            --error-color: #d32f2f;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        .container { background-color: var(--card-bg); width: 100%; max-width: 850px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 25px; position: relative; }
+        header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary-light); padding-bottom: 15px; }
+        h1 { color: var(--primary-color); font-size: 1.4rem; margin-bottom: 6px; }
+        .sub-title { font-size: 0.95rem; color: #666; }
+        
+        #start-screen { text-align: center; padding: 20px 0; }
+        .input-group { margin: 20px 0; }
+        label { display: block; font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; }
+        input[type="text"] { width: 100%; max-width: 400px; padding: 12px; font-size: 1.05rem; border: 2px solid #ccc; border-radius: 8px; outline: none; text-align: center; }
+        input[type="text"]:focus { border-color: var(--primary-color); }
+        
+        .btn { background-color: var(--primary-color); color: white; border: none; padding: 12px 24px; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+        .btn:hover { background-color: #1b5e20; }
+        .btn-secondary { background-color: #78909c; }
+        .btn-secondary:hover { background-color: #455a64; }
+
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; height: 10px; margin-bottom: 20px; overflow: hidden; display: none; }
+        .progress-bar { height: 100%; background-color: var(--primary-color); width: 0%; transition: width 0.3s ease; }
+
+        #quiz-screen { display: none; }
+        .question-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .level-badge { background-color: var(--primary-light); color: var(--primary-color); padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: bold; }
+        .question-number { font-size: 1rem; font-weight: bold; color: var(--secondary-color); }
+        .question-text { font-size: 1.15rem; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+        
+        .options-list { list-style: none; }
+        .option-item { background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; }
+        .option-item:hover { border-color: var(--primary-color); background-color: var(--primary-light); }
+        .option-item.selected { border-color: var(--primary-color); background-color: var(--primary-light); font-weight: bold; }
+        .option-item input[type="radio"] { margin-right: 12px; transform: scale(1.2); accent-color: var(--primary-color); }
+
+        /* Style Đúng/Sai */
+        .tf-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .tf-table th, .tf-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .tf-table th { background-color: var(--primary-light); color: var(--primary-color); }
+        .tf-table td.center { text-align: center; width: 70px; }
+
+        /* Style Nối ghép */
+        .match-container { display: flex; flex-direction: column; gap: 12px; }
+        .match-row { display: flex; align-items: center; gap: 10px; background-color: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e0e0e0; }
+        .match-left { flex: 1; font-weight: 600; }
+        .match-arrow { font-weight: bold; color: var(--secondary-color); }
+        .match-select { flex: 1.5; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem; }
+
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+        
+        #result-screen { display: none; }
+        .score-box { text-align: center; background-color: var(--primary-light); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .final-score { font-size: 2.2rem; font-weight: bold; color: var(--secondary-color); margin: 8px 0; }
+        
+        .review-item { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; background-color: #fff; }
+        .review-item.correct { border-left: 6px solid var(--primary-color); }
+        .review-item.incorrect { border-left: 6px solid var(--error-color); }
+        .explanation { margin-top: 8px; background-color: #f1f3f4; padding: 10px; border-radius: 6px; font-size: 0.9rem; color: #444; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .question-text { font-size: 1rem; }
+            .btn { width: 48%; padding: 10px 5px; font-size: 0.9rem; }
+            .match-row { flex-direction: column; align-items: flex-start; }
+            .match-select { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>TRÒ CHƠI KHOA HỌC TỰ NHIÊN 9</h1>
+        <div class="sub-title">Bài 37: Các Quy Luật Di Truyền Của Mendel</div>
+    </header>
+
+    <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div id="start-screen">
+        <div class="input-group">
+            <label for="student-name">Họ và tên học sinh:</label>
+            <input type="text" id="student-name" placeholder="Nhập họ và tên..." autocomplete="off">
+        </div>
+        <button class="btn" onclick="startQuiz()">Bắt Đầu Trò Chơi</button>
+    </div>
+
+    <div id="quiz-screen">
+        <div class="question-meta">
+            <span class="question-number" id="q-number">Câu 1/15</span>
+            <span class="level-badge" id="q-level">Nhận biết</span>
+        </div>
+        <div class="question-text" id="q-text">Nội dung câu hỏi</div>
+        
+        <div id="interactive-area"></div>
+
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" id="btn-prev" onclick="prevQuestion()" disabled>Câu trước</button>
+            <button class="btn" id="btn-next" onclick="nextQuestion()">Câu tiếp</button>
+            <button class="btn" id="btn-submit" onclick="submitQuiz()" style="display: none; background-color: var(--secondary-color);">Nộp Bài</button>
+        </div>
+    </div>
+
+    <div id="result-screen">
+        <div class="score-box">
+            <h2>KẾT QUẢ BÀI LÀM</h2>
+            <p style="margin-top: 5px;">Học sinh: <strong id="result-name" style="color: var(--primary-color);"></strong></p>
+            <div class="final-score" id="result-score">0 / 15 Điểm</div>
+            <p id="result-feedback"></p>
+        </div>
+
+        <h3 style="margin-bottom: 15px; color: var(--primary-color);">ĐÁP ÁN VÀ LỜI GIẢI CHI TIẾT:</h3>
+        <div id="review-container"></div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn" onclick="restartQuiz()">Làm Lại Bài</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        // --- NHẬN BIẾT (7 CÂU) ---
+        {
+            type: "single",
+            level: "Nhận biết",
+            question: "Đối tượng thí nghiệm chính được Mendel sử dụng để nghiên cứu tìm ra các quy luật di truyền là gì?",
+            options: [
+                "Đậu Hà Lan",
+                "Ruồi giấm",
+                "Cây cà chua",
+                "Cây ngô"
+            ],
+            correct: 0,
+            explanation: "Mendel đã sử dụng đậu Hà Lan làm đối tượng nghiên cứu chính nhờ các đặc tính ưu việt như tự thụ phấn nghiêm ngặt và thời gian sinh trưởng ngắn."
+        },
+        {
+            type: "single",
+            level: "Nhận biết",
+            question: "Khi cho giao phấn giữa hai dòng đậu Hà Lan thuần chủng khác nhau về một cặp tính trạng tương phản (Ví dụ: Hoa tím x Hoa trắng), F1 thu được kết quả như thế nào?",
+            options: [
+                "100% mang tính trạng lặn",
+                "100% mang tính trạng trội",
+                "50% trội : 50% lặn",
+                "75% trội : 25% lặn"
+            ],
+            correct: 1,
+            explanation: "Ở phép lai một tính trạng của Mendel, đời F1 đồng tính 100% mang tính trạng trội (hoa tím)."
+        },
+        {
+            type: "single",
+            level: "Nhận biết",
+            question: "Theo quy luật phân li của Mendel, khi cho các cây F1 tự thụ phấn thì ở F2 thu được tỉ lệ kiểu hình xấp xỉ là bao nhiêu?",
+            options: [
+                "1 trội : 1 lặn",
+                "9 trội : 7 lặn",
+                "3 trội : 1 lặn",
+                "100% tính trạng trội"
+            ],
+            correct: 2,
+            explanation: "Cho F1 tự thụ phấn, ở F2 thu được phân tính theo tỉ lệ xấp xỉ 3 trội : 1 lặn."
+        },
+        {
+            type: "match",
+            level: "Nhận biết",
+            question: "Hãy nối các thuật ngữ/phép lai ở cột trái với khái niệm/kết quả tương ứng ở cột phải:",
+            left: [
+                "1. Lai phân tích",
+                "2. Quy luật phân li",
+                "3. Quy luật phân li độc lập"
+            ],
+            rightOptions: [
+                "-- Chọn định nghĩa/kết quả --",
+                "a) Phép lai giữa cơ thể mang tính trạng trội với cơ thể mang tính trạng lặn để kiểm tra kiểu gene.",
+                "b) Mỗi giao tử chỉ chứa một allele của cặp allele quy định tính trạng.",
+                "c) Các cặp allele phân li độc lập với nhau trong quá trình hình thành giao tử."
+            ],
+            correct: ["1", "2", "3"],
+            explanation: "Cụ thể: 1-a (Lai phân tích), 2-b (Quy luật phân li), 3-c (Quy luật phân li độc lập)."
+        },
+        {
+            type: "tf",
+            level: "Nhận biết",
+            question: "Xác định tính Đúng/Sai của các phát biểu sau về các khái niệm di truyền cơ bản:",
+            statements: [
+                "a) Mỗi tính trạng của cơ thể do một cặp allele (nhân tố di truyền) quy định.",
+                "b) Phép lai phân tích chỉ dùng để xác định kiểu hình của cơ thể mang tính trạng lặn.",
+                "c) Cơ thể có kiểu gene AA gọi là đồng hợp trội, Aa gọi là dị hợp."
+            ],
+            correct: [true, false, true],
+            explanation: "b) Sai vì phép lai phân tích dùng để xác định kiểu gene (đồng hợp hay dị hợp) của cơ thể mang tính trạng TRỘI."
+        },
+        {
+            type: "single",
+            level: "Nhận biết",
+            question: "Trong thí nghiệm lai hai tính trạng của Mendel (Màu hạt và Dạng hạt), tỉ lệ kiểu hình thu được ở đời F2 là bao nhiêu?",
+            options: [
+                "3 : 1",
+                "9 : 3 : 3 : 1",
+                "1 : 2 : 1",
+                "1 : 1 : 1 : 1"
+            ],
+            correct: 1,
+            explanation: "F2 của phép lai hai tính trạng phân li theo tỉ lệ xấp xỉ 9 hạt vàng-trơn : 3 hạt vàng-nhăn : 3 hạt xanh-trơn : 1 hạt xanh-nhăn."
+        },
+        {
+            type: "single",
+            level: "Nhận biết",
+            question: "Phát biểu nào sau đây thể hiện đúng nội dung Quy luật phân li độc lập?",
+            options: [
+                "Các allele trong cùng một cặp phân li đồng đều về các giao tử.",
+                "Các cặp allele quy định các tính trạng khác nhau phân li độc lập với nhau trong quá trình hình thành giao tử.",
+                "Sự kết hợp ngẫu nhiên của các giao tử làm cho F2 luôn có tỉ lệ 3 trội : 1 lặn.",
+                "Tính trạng lặn luôn lấn áp hoàn toàn tính trạng trội ở F1."
+            ],
+            correct: 1,
+            explanation: "Nội dung quy luật phân li độc lập: Các cặp allele quy định các tính trạng khác nhau phân li độc lập với nhau khi hình thành giao tử."
+        },
+
+        // --- THÔNG HIỂU (5 CÂU) ---
+        {
+            type: "single",
+            level: "Thông hiểu",
+            question: "Một cơ thể có kiểu gene dị hợp Aa khi giảm phân bình thường sẽ tạo ra các loại giao tử với tỉ lệ như thế nào?",
+            options: [
+                "100% giao tử A",
+                "100% giao tử a",
+                "50% giao tử A : 50% giao tử a",
+                "75% giao tử A : 25% giao tử a"
+            ],
+            correct: 2,
+            explanation: "Do hai allele A và a phân li đồng đều trong giảm phân nên tạo ra 2 loại giao tử A và a với tỉ lệ ngang nhau (1 : 1 hay 50% A : 50% a)."
+        },
+        {
+            type: "tf",
+            level: "Thông hiểu",
+            question: "Hãy đánh giá tính Đúng/Sai của các nhận định liên quan đến Phép lai phân tích:",
+            statements: [
+                "a) Nếu kết quả phép lai phân tích đồng tính (100% trội) thì cơ thể mang tính trạng trội có kiểu gene đồng hợp (AA).",
+                "b) Nếu kết quả phép lai phân tích phân tính theo tỉ lệ 1 trội : 1 lặn thì cơ thể mang tính trạng trội có kiểu gene dị hợp (Aa).",
+                "c) Phép lai phân tích luôn cho kết quả phân tính theo tỉ lệ 3 : 1 ở đời con."
+            ],
+            correct: [true, true, false],
+            explanation: "c) Sai vì phép lai phân tích chỉ cho kết quả 100% trội (khi AA x aa) hoặc 1 trội : 1 lặn (khi Aa x aa)."
+        },
+        {
+            type: "single",
+            level: "Thông hiểu",
+            question: "Cơ thể có kiểu gene AaBb (các gene phân li độc lập) khi giảm phân bình thường sẽ tạo ra tối đa bao nhiêu loại giao tử?",
+            options: [
+                "2 loại giao tử",
+                "4 loại giao tử",
+                "8 loại giao tử",
+                "16 loại giao tử"
+            ],
+            correct: 1,
+            explanation: "Kiểu gene AaBb có 2 cặp gene dị hợp phân li độc lập sẽ tạo ra 2^2 = 4 loại giao tử là: AB, Ab, aB, ab với tỉ lệ ngang nhau (1/4 mỗi loại)."
+        },
+        {
+            type: "match",
+            level: "Thông hiểu",
+            question: "Hãy nối các phép lai ở cột trái với tỉ lệ kiểu hình tương ứng ở đời con ở cột phải (Biết A: quả đỏ trội hoàn toàn so với a: quả vàng):",
+            left: [
+                "1. Phép lai Aa x Aa",
+                "2. Phép lai Aa x aa",
+                "3. Phép lai AA x aa"
+            ],
+            rightOptions: [
+                "-- Chọn tỉ lệ kiểu hình --",
+                "a) 3 Quả đỏ : 1 Quả vàng",
+                "b) 1 Quả đỏ : 1 Quả vàng",
+                "c) 100% Quả đỏ"
+            ],
+            correct: ["1", "2", "3"],
+            explanation: "Aa x Aa -> 3 đỏ : 1 vàng; Aa x aa -> 1 đỏ : 1 vàng; AA x aa -> 100% đỏ."
+        },
+        {
+            type: "single",
+            level: "Thông hiểu",
+            question: "Vì sao tỉ lệ kiểu hình ở F2 trong phép lai hai tính trạng của Mendel lại bằng (3 : 1) x (3 : 1) = 9 : 3 : 3 : 1?",
+            options: [
+                "Vì hai cặp tính trạng di truyền liên kết chặt chẽ với nhau.",
+                "Vì sự di truyền của tính trạng màu sắc hạt không phụ thuộc vào tính trạng dạng hạt (di truyền độc lập).",
+                "Vì các giao tử kết hợp với nhau không theo quy luật ngẫu nhiên.",
+                "Vì F1 chỉ tạo ra được 2 loại giao tử đực và cái."
+            ],
+            correct: 1,
+            explanation: "Tỉ lệ phân li chung bằng tích tỉ lệ phân li riêng của từng cặp tính trạng cho thấy hai cặp tính trạng di truyền độc lập với nhau."
+        },
+
+        // --- VẬN DỤNG (3 CÂU) ---
+        {
+            type: "single",
+            level: "Vận dụng",
+            question: "Ở cà chua, gene A quy định quả đỏ trội hoàn toàn so với gene a quy định quả vàng. Cho cây cà chua quả đỏ dị hợp (Aa) tự thụ phấn, thu được 400 quả ở F1. Theo lý thuyết, số quả màu đỏ thu được xấp xỉ là bao nhiêu?",
+            options: [
+                "100 quả",
+                "200 quả",
+                "300 quả",
+                "400 quả"
+            ],
+            correct: 2,
+            explanation: "Phép lai Aa x Aa cho tỉ lệ kiểu hình F1 là 3/4 Quả đỏ : 1/4 Quả vàng. Số quả đỏ thu được = 400 x (3/4) = 300 quả."
+        },
+        {
+            type: "single",
+            level: "Vận dụng",
+            question: "Cho phép lai P: AaBb x aabb. Biết các cặp gene phân li độc lập. Tỉ lệ kiểu gene AaBb thu được ở đời con F1 là bao nhiêu?",
+            options: [
+                "1/16",
+                "1/4 (25%)",
+                "1/2 (50%)",
+                "9/16"
+            ],
+            correct: 1,
+            explanation: "Sơ đồ lai: AaBb x aabb. Cơ thể AaBb cho 4 loại giao tử (1/4 AB, 1/4 Ab, 1/4 aB, 1/4 ab), cơ thể aabb cho 1 loại giao tử ab. Tỉ lệ kiểu gene AaBb = (1/4 AB) x (1 ab) = 1/4 (25%)."
+        },
+        {
+            type: "tf",
+            level: "Vận dụng",
+            question: "Vận dụng quy luật Mendel để đánh giá tính Đúng/Sai của các giải pháp trong chọn giống thực tiễn:",
+            statements: [
+                "a) Muốn kiểm tra một giống cây trồng mang tính trạng trội có thuần chủng hay không, người ta có thể cho cây đó tự thụ phấn hoặc lai phân tích.",
+                "b) Việc ứng dụng quy luật phân li độc lập giúp các nhà sản xuất tạo ra các biến dị tổ hợp mang các tổ hợp tính trạng tốt.",
+                "c) Để tạo ra thế hệ con đồng loạt có tính trạng giống nhau, nhà sản xuất nên cho chọn các cá thể có kiểu gene dị hợp (Aa) làm giống."
+            ],
+            correct: [true, true, false],
+            explanation: "c) Sai vì các cá thể dị hợp (Aa) khi sinh sản sẽ bị phân tính ở đời con; muốn đời con đồng nhất cần chọn giống thuần chủng (đồng hợp)."
+        }
+    ];
+
+    let currentQuestion = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+    let studentName = "";
+
+    function startQuiz() {
+        const name = document.getElementById('student-name').value.trim();
+        if (!name) { alert("Vui lòng nhập họ và tên!"); return; }
+        studentName = name;
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        document.getElementById('progress-container').style.display = 'block';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentQuestion];
+        document.getElementById('q-number').innerText = `Câu ${currentQuestion + 1}/${quizData.length}`;
+        document.getElementById('q-level').innerText = q.level;
+        document.getElementById('q-text').innerText = q.question;
+
+        document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / quizData.length) * 100}%`;
+
+        const area = document.getElementById('interactive-area');
+        area.innerHTML = '';
+
+        if (q.type === 'single') {
+            const ul = document.createElement('ul');
+            ul.className = 'options-list';
+            q.options.forEach((opt, idx) => {
+                const li = document.createElement('li');
+                li.className = `option-item ${userAnswers[currentQuestion] === idx ? 'selected' : ''}`;
+                li.onclick = () => { userAnswers[currentQuestion] = idx; loadQuestion(); };
+                li.innerHTML = `<input type="radio" ${userAnswers[currentQuestion] === idx ? 'checked' : ''}> ${opt}`;
+                ul.appendChild(li);
+            });
+            area.appendChild(ul);
+        } else if (q.type === 'tf') {
+            if (!userAnswers[currentQuestion]) userAnswers[currentQuestion] = new Array(q.statements.length).fill(null);
+            const table = document.createElement('table');
+            table.className = 'tf-table';
+            table.innerHTML = `<tr><th>Mệnh đề</th><th class="center">Đúng</th><th class="center">Sai</th></tr>`;
+            q.statements.forEach((stmt, idx) => {
+                const tr = document.createElement('tr');
+                const val = userAnswers[currentQuestion][idx];
+                tr.innerHTML = `
+                    <td>${stmt}</td>
+                    <td class="center"><input type="radio" name="tf-${idx}" ${val === true ? 'checked' : ''} onclick="setTF(${idx}, true)"></td>
+                    <td class="center"><input type="radio" name="tf-${idx}" ${val === false ? 'checked' : ''} onclick="setTF(${idx}, false)"></td>
+                `;
+                table.appendChild(tr);
+            });
+            area.appendChild(table);
+        } else if (q.type === 'match') {
+            if (!userAnswers[currentQuestion]) userAnswers[currentQuestion] = new Array(q.left.length).fill("0");
+            const matchContainer = document.createElement('div');
+            matchContainer.className = 'match-container';
+            q.left.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'match-row';
+                let selectOptions = q.rightOptions.map((opt, oIdx) => 
+                    `<option value="${oIdx}" ${userAnswers[currentQuestion][idx] == oIdx ? 'selected' : ''}>${opt}</option>`
+                ).join('');
+                row.innerHTML = `
+                    <div class="match-left">${item}</div>
+                    <div class="match-arrow">➜</div>
+                    <select class="match-select" onchange="setMatch(${idx}, this.value)">${selectOptions}</select>
+                `;
+                matchContainer.appendChild(row);
+            });
+            area.appendChild(matchContainer);
+        }
+
+        document.getElementById('btn-prev').disabled = currentQuestion === 0;
+        if (currentQuestion === quizData.length - 1) {
+            document.getElementById('btn-next').style.display = 'none';
+            document.getElementById('btn-submit').style.display = 'inline-block';
+        } else {
+            document.getElementById('btn-next').style.display = 'inline-block';
+            document.getElementById('btn-submit').style.display = 'none';
+        }
+    }
+
+    function setTF(idx, val) { userAnswers[currentQuestion][idx] = val; }
+    function setMatch(idx, val) { userAnswers[currentQuestion][idx] = val; }
+    function nextQuestion() { if (currentQuestion < quizData.length - 1) { currentQuestion++; loadQuestion(); } }
+    function prevQuestion() { if (currentQuestion > 0) { currentQuestion--; loadQuestion(); } }
+
+    function submitQuiz() {
+        let score = 0;
+        quizData.forEach((q, idx) => {
+            const ans = userAnswers[idx];
+            if (q.type === 'single' && ans === q.correct) score++;
+            else if (q.type === 'tf' && Array.isArray(ans) && ans.every((v, i) => v === q.correct[i])) score++;
+            else if (q.type === 'match' && Array.isArray(ans) && ans.every((v, i) => v == q.correct[i])) score++;
+        });
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('progress-container').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+
+        document.getElementById('result-name').innerText = studentName;
+        document.getElementById('result-score').innerText = `${score} / 15 Điểm`;
+
+        const reviewContainer = document.getElementById('review-container');
+        reviewContainer.innerHTML = '';
+        quizData.forEach((q, idx) => {
+            const item = document.createElement('div');
+            item.className = 'review-item';
+            item.innerHTML = `<strong>Câu ${idx + 1}: ${q.question}</strong><div class="explanation"><strong>Lời giải / Giải thích:</strong> ${q.explanation}</div>`;
+            reviewContainer.appendChild(item);
+        });
+    }
+
+    function restartQuiz() {
+        currentQuestion = 0;
+        userAnswers = new Array(quizData.length).fill(null);
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'block';
+    }
+</script>
+</body>
+</html>
